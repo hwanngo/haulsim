@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AMT Cycle Workbench">
+  <rect width="512" height="512" rx="112" fill="#FFCD11"/>
+  <g fill="#0A0A0A">
+    <!-- loaded dump bed -->
+    <path d="M116 300 L356 300 L344 206 L312 124 L258 140 L205 126 L150 150 Z"/>
+    <!-- chassis -->
+    <rect x="120" y="300" width="300" height="30" rx="6"/>
+    <!-- cab -->
+    <rect x="352" y="252" width="60" height="52" rx="8"/>
+    <!-- tyres -->
+    <circle cx="196" cy="352" r="56"/>
+    <circle cx="356" cy="352" r="48"/>
+  </g>
+  <!-- cab window + wheel hubs (yellow cut-outs) -->
+  <rect x="362" y="262" width="30" height="20" rx="3" fill="#FFCD11"/>
+  <circle cx="196" cy="352" r="24" fill="#FFCD11"/>
+  <circle cx="356" cy="352" r="20" fill="#FFCD11"/>
+  <circle cx="196" cy="352" r="9" fill="#0A0A0A"/>
+  <circle cx="356" cy="352" r="8" fill="#0A0A0A"/>
+</svg>

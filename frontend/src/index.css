@@ -1,0 +1,38 @@
+/* Base styles. Theme tokens/colors live in src/system.ts (Chakra). */
+
+/*
+ * Keyboard focus ring (A3). Unlayered on purpose: Chakra emits its 1px default
+ * inside @layer, and any unlayered rule beats every layered rule regardless of
+ * specificity. 2px CAT link-blue with an offset for clear visibility.
+ */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible,
+[role="switch"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #0067b8;
+  outline-offset: 2px;
+}
+
+/* Faint industrial backdrop band behind the centered card (low-chrome depth). */
+.app-backdrop {
+  background:
+    radial-gradient(1200px 380px at 50% -120px, rgba(255, 205, 17, 0.12), transparent 70%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.02) 0,
+      rgba(0, 0, 0, 0.02) 1px,
+      transparent 1px,
+      transparent 14px
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

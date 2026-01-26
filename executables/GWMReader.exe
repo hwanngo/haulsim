@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""
+GWMReader.exe  —  drop-in clone of the proprietary AMT gateway parser.
+
+The real GWMReader.exe is a Windows binary that decodes proprietary .gwm captures.
+This clone reproduces its *interface* so the import flow works on any OS:
+
+  invocation : GWMReader.exe --sitename=<name> --files=<abs path[ abs path...]>
+  output     : a JSON document written to STDERR, exit code 0
+  JSON shape : {"CycleProdInfo": {"<ip>": [[24 fields], ...], ...}}
+
+Each 24-field message array matches parse_message_to_dict() in
+backend/core/gateway_data_converter.py:
+  0 IPAddress  1 segmentId  2 startTime  3 expElapsed  4 actElapsed
+  5 easting  6 northing  7 elevation  8 plannedDist  9 expSpeed 10 actSpeed
+  11 expDesSpeed 12 actDesSpeed 13 leftW 14 rightW 15 bank 16 heading
+  17 payload 18 expSpdSrc 19 expASLR 20 expRegMod 21 actSpdSrc 22 actASLR 23 actRegMod
+
+Readable .gwm clone format (one message per line, '|'-separated, '#' = comment):
+  <ip>|<segmentId>|<startTime>|<expElapsed>|...|<actRegMod>
+A .json file containing {"CycleProdInfo": {...}} is also accepted verbatim.
+"""
+import json
+import sys
+
+N_FIELDS = 24
+
+
+def parse_token(tok):
+    tok = tok.strip()
+    if tok == "" or tok.lower() in ("null", "none"):
+        return None
+    try:
+        f = float(tok)
+        return int(f) if f.is_integer() else f
+    except ValueError:
+        return tok  # leave strings (e.g. ISO timestamps) as-is
+
+
+def read_gwm_file(path, cpi):
+    with open(path, "r", errors="replace") as fh:
+        head = fh.read(1)
+        fh.seek(0)
+        # A clone .gwm may actually be JSON (already-structured) — accept it.
+        if head == "{":
+            doc = json.load(fh)
+            block = doc.get("CycleProdInfo") or doc.get("CycleProdInfo2") or {}
+            for ip, msgs in block.items():
+                cpi.setdefault(str(ip), []).extend(msgs)
+            return
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            fields = [parse_token(t) for t in line.split("|")]
+            if len(fields) < N_FIELDS:
+                fields += [None] * (N_FIELDS - len(fields))
+            ip = str(fields[0])
+            cpi.setdefault(ip, []).append(fields[:N_FIELDS])
+
+
+def main(argv):
+    files = []
+    for arg in argv:
+        if arg.startswith("--files="):
+            # One path per --files= (the value may contain spaces — do NOT split).
+            files.append(arg[len("--files="):])
+        elif arg.startswith("--sitename="):
+            pass  # accepted for interface parity; not needed by the clone
+        elif not arg.startswith("--"):
+            files.append(arg)
+
+    cpi = {}
+    failures = 0
+    for path in files:
+        try:
+            read_gwm_file(path, cpi)
+        except Exception as e:  # surface per-file issues without aborting the batch
+            failures += 1
+            print(f"[GWMReader] WARN failed to read {path}: {e}", file=sys.stdout)
+
+    # The backend reads the parser's JSON from STDERR.
+    sys.stderr.write(json.dumps({"CycleProdInfo": cpi}))
+    sys.stderr.flush()
+
+    # Fail loudly if nothing parsed (M2): a corrupt/empty upload must not look successful.
+    if not cpi:
+        print("[GWMReader] ERROR no records parsed from any input file", file=sys.stdout)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

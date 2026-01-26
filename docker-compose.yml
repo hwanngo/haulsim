@@ -1,0 +1,50 @@
+# Full stack for the AMT Cycle Workbench: backend + frontend.
+#
+#   docker compose up -d --build      # build + run everything
+#   open http://localhost:3000
+#
+# No database service: the backend bakes an embedded DuckDB file into its image
+# at build time (see backend/Dockerfile), so the Export flow has sample
+# sites/telemetry out of the box. Tunables come from ./.env (see .env.docker.example).
+
+services:
+  backend:
+    build:
+      context: .                      # repo root, so executables/ + db/ are in context
+      dockerfile: backend/Dockerfile
+    image: amt-backend
+    container_name: amt-backend
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: 5001
+      # Surface the previously code-default-only knobs so Docker matches local dev (M10).
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-5120}
+      MAX_DECOMPRESSED_MB: ${MAX_DECOMPRESSED_MB:-20480}
+    # No host port publish for the backend (C3): nginx proxies /api to
+    # backend:5001 over the internal network; only the frontend is exposed.
+    volumes:
+      - amt_output:/app/output
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: amt-frontend
+    container_name: amt-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
+volumes:
+  amt_output:

@@ -1,0 +1,812 @@
+# Model Structure
+
+## Overview
+
+This document describes the data structures for MineOpt simulation models. The model configuration is stored as a JSON file.
+
+## Table of Contents
+
+1. [Top-Level Structure](#1-top-level-structure)
+2. [Nodes](#2-nodes)
+3. [Roads](#3-roads)
+4. [Load Zones](#4-load-zones)
+5. [Dump Zones](#5-dump-zones)
+6. [Routes](#6-routes)
+7. [Machine List](#7-machine-list)
+8. [Haulers](#8-haulers)
+9. [Loaders](#9-loaders)
+10. [Operations - Material Schedules](#10-operations---material-schedules)
+11. [File Format](#11-file-format)
+
+## 1. Top-Level Structure
+
+```json
+{
+  "version": "string",
+  "map_id": "number",
+  "map_translate": { },
+  "machine_list": { },
+  "parameters": [ ],
+  "settings": { },
+  "zone_defaults": { },
+  "default_powernode_priorities": { },
+  "economic_settings": { },
+  "nodes": [ ],
+  "roads": [ ],
+  "trolleys": [ ],
+  "chargers": [ ],
+  "service_stations": [ ],
+  "load_zones": [ ],
+  "dump_zones": [ ],
+  "haulers": [ ],
+  "loaders": [ ],
+  "routes": [ ],
+  "simulates": [ ],
+  "explorations": [ ],
+  "esses": [ ],
+  "power_management": { },
+  "electrical_distributions": [ ],
+  "operations": { },
+  "local_machines": { },
+  "batteries": [ ],
+  "crushers": [ ],
+  "routeProcess": { },
+  "cameraPosition": { },
+  "controlTarget": { }
+}
+```
+
+### 1.1 Top-Level Field Summary
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `version` | string | Configuration version identifier |
+| `map_id` | number | Reference ID to terrain map (-1 if none) |
+| `map_translate` | object | Coordinate offset for map positioning |
+| `machine_list` | object | Available machine specifications |
+| `parameters` | array | User-defined parameters |
+| `settings` | object | Global simulation settings |
+| `zone_defaults` | object | Default values for zone types |
+| `default_powernode_priorities` | object | Power node priority configurations |
+| `economic_settings` | object | TCO calculation settings |
+| `nodes` | array | Road network waypoints |
+| `roads` | array | Road segments |
+| `trolleys` | array | DET segments |
+| `chargers` | array | SET zones |
+| `service_stations` | array | Service zones |
+| `load_zones` | array | Loading areas |
+| `dump_zones` | array | Dumping areas |
+| `haulers` | array | Hauler configurations |
+| `loaders` | array | Loader configurations |
+| `routes` | array | Fleet route assignments |
+| `simulates` | array | Simulation configurations |
+| `explorations` | array | DSE configurations |
+| `esses` | array | Energy Storage Systems |
+| `power_management` | object | Power distribution settings |
+| `electrical_distributions` | array | Electrical network topology |
+| `operations` | object | Operational parameters (delays, schedules) |
+| `local_machines` | object | Locally saved machines |
+| `batteries` | array | Battery configurations |
+| `crushers` | array | Crusher configurations |
+| `routeProcess` | object | Import process information |
+| `cameraPosition` | object | 3D camera position |
+| `controlTarget` | object | Camera control target |
+
+---
+
+## 2. Nodes
+
+Nodes represent waypoints in the road network. Each node defines a point with 3D coordinates and road properties.
+
+### 2.1 Structure
+
+```json
+{
+  "id": 1,
+  "coords": [100.5, 200.3, 50.0],
+  "speed_limit": 65,
+  "rolling_resistance": 2,
+  "banking": 0,
+  "curvature": "",
+  "lane_width": "",
+  "traction": ""
+}
+```
+
+### 2.2 Field Descriptions
+
+| Field | Type | Unit | Required | Description |
+|-------|------|------|----------|-------------|
+| `id` | number | - | Yes | Unique node identifier |
+| `coords` | array[3] | meters | Yes | 3D coordinates [x, y, z] |
+| `speed_limit` | number/string | kph | Yes | Maximum allowed speed at this node |
+| `rolling_resistance` | number/string | % | Yes | Road rolling resistance coefficient |
+| `banking` | number/string | degrees | No | Road banking angle (super-elevation) |
+| `curvature` | number/string | 1/m | No | Road curvature at this point |
+| `lane_width` | number/string | meters | No | Lane width override |
+| `traction` | number/string | - | No | Traction coefficient |
+
+> **Note**: String values indicate parameter references (e.g., `"$param_name"`).
+
+---
+
+## 3. Roads
+
+Roads (segments) connect nodes to form the haul road network.
+
+### 3.1 Structure
+
+```json
+{
+  "id": 1,
+  "name": "Road 1",
+  "nodes": [1, 2, 3],
+  "is_generated": false,
+  "ways_num": 2,
+  "lanes_num": 2,
+  "banking": 0,
+  "lane_width": 14.525,
+  "speed_limit": 65,
+  "rolling_resistance": 2,
+  "traction_coefficient": 0.6,
+  "offset": 0
+}
+```
+
+### 3.2 Field Descriptions
+
+| Field | Type | Unit | Required | Description |
+|-------|------|------|----------|-------------|
+| `id` | number | - | Yes | Unique road segment identifier |
+| `name` | string | - | Yes | Display name of the road |
+| `nodes` | array | - | Yes | Ordered list of node IDs forming the road path |
+| `is_generated` | boolean | - | Yes | Whether road was auto-generated by zone creation |
+| `ways_num` | number | - | Yes | Number of ways (directions) |
+| `lanes_num` | number | - | Yes | Number of lanes per way |
+| `banking` | number/string | degrees | No | Road banking angle (super-elevation) |
+| `lane_width` | number/string | meters | No | Lane width |
+| `speed_limit` | number/string | kph | No | Speed limit on this road |
+| `rolling_resistance` | number/string | % | No | Rolling resistance coefficient |
+| `traction_coefficient` | number/string | - | No | Traction coefficient |
+| `offset` | number | meters | No | Road offset from centerline |
+| `_original_roads` | array | - | No | List of original road IDs (after intersection splitting) |
+| `_is_shared` | boolean | - | No | Whether this segment is shared by multiple roads |
+
+### 3.3 Road Naming Convention
+
+After intersection splitting, roads are named:
+- `Road_N` - Regular road segment (used by single original road)
+- `Road_N_Shared` - Shared segment (used by multiple original roads)
+
+### 3.4 Road Intersection Rules
+
+Roads are split at intersections to ensure:
+- Roads only share nodes at **start** or **end** points
+- No node appears in the **middle** of multiple roads
+- Shared segments are deduplicated
+
+Example:
+```
+Before: Road A [1,2,3,4,5], Road B [6,7,3,8,9]  (intersection at node 3)
+After:  Road_1 [1,2,3], Road_2 [3,4,5], Road_3 [6,7,3], Road_4 [3,8,9]
+```
+
+---
+
+## 4. Load Zones
+
+Areas where haulers are loaded by loaders. Zones are auto-generated based on settings.
+
+### 4.1 Structure
+
+```json
+{
+  "id": 1,
+  "name": "Load zone 1",
+  "is_generated": true,
+  "connector_zone_data": [],
+  "settings": {
+    "zonetype": "standard",
+    "n_spots": 1,
+    "n_entrances": 1,
+    "roadlength": 100,
+    "width": 50,
+    "access_distance": 40,
+    "angular_spread": 80,
+    "clearance_radius": 80,
+    "speed_limit": 20,
+    "rolling_resistance": 2,
+    "reverse_speed_limit": 5,
+    "flip": false,
+    "dtheta": 0,
+    "queing": false,
+    "create_uturn_road": false,
+    "inroad_ids": [1],
+    "outroad_ids": [2],
+    "innode_ids": [10],
+    "outnode_ids": [12]
+  }
+}
+```
+
+### 4.2 Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | number | Yes | Unique load zone identifier |
+| `name` | string | Yes | Display name — auto-generated as `f"Load zone {id}"` (integer id, 1-based) |
+| `is_generated` | boolean | Yes | Always `true` - zones are auto-generated |
+| `connector_zone_data` | array | No | Connected charger/trolley data |
+| `settings` | object | Yes | Zone generation settings |
+
+### 4.3 Settings Object
+
+| Field | Type | Unit | Default | Description |
+|-------|------|------|---------|-------------|
+| `zonetype` | string | - | standard | Zone template type |
+| `n_spots` | number | - | 1 | Number of loading spots |
+| `n_entrances` | number | - | 1 | Number of entrances per spot |
+| `roadlength` | number | meters | 100 | Generated road length |
+| `width` | number | meters | 50 | Zone width |
+| `access_distance` | number | meters | 40 | Access road distance |
+| `angular_spread` | number | degrees | 80 | Angular spread for truck positioning |
+| `clearance_radius` | number | meters | 80 | Clearance radius around zone |
+| `speed_limit` | number/string | kph | "" | Speed limit within zone |
+| `rolling_resistance` | number/string | % | "" | Rolling resistance in zone |
+| `reverse_speed_limit` | number/string | kph | "" | Speed limit when reversing |
+| `flip` | boolean | - | false | Flip zone orientation |
+| `dtheta` | number | degrees | 0 | Rotation angle |
+| `queing` | boolean | - | false | Enable queueing logic |
+| `create_uturn_road` | boolean | - | false | Whether to auto-create a U-turn approach road |
+| `inroad_ids` | array | - | - | Entry road IDs |
+| `outroad_ids` | array | - | - | Exit road IDs |
+| `innode_ids` | array | - | - | Entry node IDs |
+| `outnode_ids` | array | - | - | Exit node IDs |
+
+### 4.4 Zone Types
+
+| Type | Description |
+|------|-------------|
+| `standard` | Standard loading configuration |
+| `uturn` | U-turn loading configuration |
+| `turnaround` | Turnaround loading configuration |
+| `drivethrough` | Drive-through loading configuration |
+
+---
+
+## 5. Dump Zones
+
+Areas where haulers dump their payload. Zones are auto-generated based on settings.
+
+### 5.1 Structure
+
+```json
+{
+  "id": 1,
+  "name": "Dump zone 1",
+  "is_generated": true,
+  "connector_zone_data": [],
+  "settings": {
+    "zonetype": "standard",
+    "n_spots": 1,
+    "n_entrances": 1,
+    "roadlength": 100,
+    "width": 50,
+    "access_distance": 40,
+    "clearance_radius": 80,
+    "speed_limit": 20,
+    "rolling_resistance": 2,
+    "reverse_speed_limit": 5,
+    "flip": false,
+    "dtheta": 0,
+    "queing": false,
+    "create_uturn_road": false,
+    "power_factor": 1.0,
+    "inroad_ids": [1],
+    "outroad_ids": [2],
+    "innode_ids": [20],
+    "outnode_ids": [22]
+  }
+}
+```
+
+### 5.2 Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | number | Yes | Unique dump zone identifier |
+| `name` | string | Yes | Display name — auto-generated as `f"Dump zone {id}"` (integer id, 1-based, separate counter from load zones) |
+| `is_generated` | boolean | Yes | Always `true` - zones are auto-generated |
+| `connector_zone_data` | array | No | Connected charger/trolley data |
+| `settings` | object | Yes | Zone generation settings |
+
+### 5.3 Settings Object
+
+| Field | Type | Unit | Default | Description |
+|-------|------|------|---------|-------------|
+| `zonetype` | string | - | standard | Zone template type |
+| `n_spots` | number | - | 1 | Number of dumping spots |
+| `n_entrances` | number | - | 1 | Number of entrances per spot |
+| `roadlength` | number | meters | 100 | Generated road length |
+| `width` | number | meters | 50 | Zone width |
+| `access_distance` | number | meters | 40 | Access road distance |
+| `clearance_radius` | number | meters | 80 | Clearance radius around zone |
+| `speed_limit` | number/string | kph | "" | Speed limit within zone |
+| `rolling_resistance` | number/string | % | "" | Rolling resistance in zone |
+| `reverse_speed_limit` | number/string | kph | "" | Speed limit when reversing |
+| `flip` | boolean | - | false | Flip zone orientation |
+| `dtheta` | number | degrees | 0 | Rotation angle |
+| `queing` | boolean | - | false | Enable queueing logic |
+| `create_uturn_road` | boolean | - | false | Whether to auto-create a U-turn approach road |
+| `power_factor` | number | ratio | 1.0 | Power factor for electrical calculations |
+| `inroad_ids` | array | - | - | Entry road IDs |
+| `outroad_ids` | array | - | - | Exit road IDs |
+| `innode_ids` | array | - | - | Entry node IDs |
+| `outnode_ids` | array | - | - | Exit node IDs |
+
+### 5.4 Connector Zone Data
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `charger_id` | number | Connected SET zone ID |
+| `trolley_id` | number | Connected DET segment ID |
+| `road` | number | Road ID for connection |
+| `node` | number | Node ID for connection |
+
+---
+
+## 6. Routes
+
+Routes define the paths that haulers take between load zones and dump zones.
+
+### 6.1 Structure
+
+```json
+{
+  "id": 1,
+  "name": "Route 1",
+  "haul": [1, 2, 3],
+  "return": [4, 5, 6],
+  "load_zone": 1,
+  "dump_zone": 1
+}
+```
+
+### 6.2 Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | number | Yes | Unique route identifier |
+| `name` | string | Yes | Display name of the route |
+| `haul` | number[] | Yes | Array of road IDs forming the haul (loaded) path |
+| `return` | number[] | Yes | Array of road IDs forming the return (empty) path |
+| `load_zone` | number | Yes | ID of the load zone where haulers load material |
+| `dump_zone` | number | Yes | ID of the dump zone where haulers dump material |
+
+### 6.3 Simulation Runtime Properties
+
+During simulation, routes are enriched with additional properties:
+
+| Field | Type | Unit | Description |
+|-------|------|------|-------------|
+| `materialGenerate` | boolean | - | Whether route generates material |
+| `production` | boolean | - | Production status |
+| `road_trolley_length` | object | - | Mapping of road trolley lengths |
+| `trolley_total_length` | number | meters | Total trolley line distance |
+| `road_length` | number | meters | Total road distance |
+| `total_power` | number | kW | Total power required |
+| `min_cycle_time` | number | hours | Minimum cycle time |
+| `trolley_percent` | number | % | Percentage of route with trolley |
+| `energy` | number | kWh | Energy consumption |
+| `net_energy` | number | kWh | Net energy consumption |
+| `material_movement.planned` | number | tonnes | Planned material movement |
+| `material_movement.actual` | number | tonnes | Actual material movement |
+
+---
+
+## 7. Machine List
+
+The machine list contains available machine specifications for haulers and loaders.
+
+### 7.1 Structure
+
+```json
+{
+  "haulers": [],
+  "loaders": []
+}
+```
+
+### 7.2 Hauler Machine Item (`machine_list.haulers`)
+
+```json
+{
+  "id": 1,
+  "type": "diesel",
+  "name": "Hauler_Config_A",
+  "dump_time": 0.5,
+  "fleet_type": "staffed",
+  "accel_limit": 99,
+  "decel_limit": 99,
+  "tsm_model": "None",
+  "model_id": 101,
+  "battery_size": 500,
+  "battery_type": "LTO_23Ah",
+  "is_config": true,
+  "machine_config": {},
+  "EndOfLifeSOH": 90,
+  "AvgAnnualAmbientTemp": 45,
+  "model_name": "CAT 793"
+}
+```
+
+#### Field Descriptions
+
+| Field | Type | Unit | Required | Description |
+|-------|------|------|----------|-------------|
+| `id` | number | - | Yes | Unique machine configuration identifier |
+| `type` | string | - | Yes | Machine type: `"diesel"` or `"electric"` |
+| `name` | string | - | Yes | User-defined name (unique, no commas) |
+| `dump_time` | number | minutes | Yes | Time to dump payload |
+| `fleet_type` | string | - | Yes | `"staffed"` or `"ahs"` (Autonomous Haul System) |
+| `accel_limit` | number | % | Yes | Acceleration limit (0-100) |
+| `decel_limit` | number | % | Yes | Deceleration limit (0-100) |
+| `tsm_model` | string | - | Yes | TSM model: `"None"`, `"777"`, `"785"`, `"789"`, `"793"`, `"794"`, `"797"`, `"798"` |
+| `model_id` | number/string | - | Yes | Reference to base machine model from database |
+| `battery_size` | number | kWh | Electric only | Battery capacity |
+| `battery_type` | string | - | Electric only | Battery chemistry: `"LTO_20Ah"`, `"LTO_23Ah"`, `"LFP_EVE_173"`, `"LFP_EVE_230"` |
+| `is_config` | boolean | - | No | Whether machine has custom configuration |
+| `machine_config` | object | - | No | Custom configuration parameters |
+| `EndOfLifeSOH` | number | % | Electric only | End of Life State of Health (0-100) |
+| `AvgAnnualAmbientTemp` | number | °C | Electric only | Average annual ambient temperature |
+| `model_name` | string | - | No | Display name of the base machine model |
+
+#### Battery Type Defaults
+
+| Battery Type | EndOfLifeSOH Default | AvgAnnualAmbientTemp Default |
+|--------------|---------------------|------------------------------|
+| LFP | 84.7% | 25°C |
+| LTO / LTO_20Ah / LTO_23Ah | 90% | 45°C |
+| EVE / NMC | 80% | 25°C |
+
+### 7.3 Loader Machine Item (`machine_list.loaders`)
+
+```json
+{
+  "id": 1,
+  "type": "diesel",
+  "name": "Loader_Config_A",
+  "model_id": 201,
+  "loader": {},
+  "machine_config": {
+    "buckets": [
+      {
+        "Order": 1,
+        "selected": true,
+        "capacity": 10
+      }
+    ]
+  },
+  "geometry_name": "CAT_950_bucket_1",
+  "model_scale": 1.0,
+  "model_name": "CAT 950"
+}
+```
+
+#### Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | number | Yes | Unique machine configuration identifier |
+| `type` | string | Yes | Machine type: `"diesel"` or `"electric"` |
+| `name` | string | Yes | User-defined name (unique, no commas) |
+| `model_id` | number/string | Yes | Reference to base machine model from database |
+| `loader` | object | Yes | Base loader machine specification from database |
+| `machine_config` | object | No | Custom configuration (buckets) |
+| `geometry_name` | string | No | Name of loader geometry for 3D visualization |
+| `model_scale` | number | No | Scale factor for 3D model |
+| `model_name` | string | No | Display name of the base machine model |
+
+---
+
+## 8. Haulers
+
+Haulers represent truck fleet configurations assigned to routes.
+
+### 8.1 Structure
+
+```json
+{
+  "id": 1,
+  "group_id": 1,
+  "key": "haulers",
+  "name": "Hauler 1",
+  "machine_id": 1,
+  "is_local_machine": null,
+  "geometry_name": "_default",
+  "model_scale": 1,
+  "type": "electric",
+  "number_of_haulers": 5,
+  "lane": 2,
+  "initial_position": 1,
+  "initial_level_pct": {
+    "type": "exact",
+    "value": 95
+  },
+  "battery_state_of_health": 90,
+  "battery_capacity": 500,
+  "initial_conditions": {
+    "route_id": 1,
+    "road_id": 1,
+    "node_id": 10,
+    "service_zone_id": 1,
+    "service_zone_spot_id": 1,
+    "load_zone_id": null,
+    "assigned_load_spots": []
+  },
+  "is_deactive": false
+}
+```
+
+### 8.2 Field Descriptions
+
+| Field | Type | Unit | Required | Description |
+|-------|------|------|----------|-------------|
+| `id` | number | - | Yes | Unique hauler identifier |
+| `group_id` | number | - | Yes | Group identifier (same as id) |
+| `key` | string | - | Yes | Always `"haulers"` |
+| `name` | string | - | Yes | Display name |
+| `machine_id` | number/string | - | Yes | Reference to machine in `machine_list.haulers` |
+| `is_local_machine` | boolean/null | - | No | Whether using locally stored machine |
+| `geometry_name` | string | - | No | 3D model geometry name |
+| `model_scale` | number | ratio | No | 3D model scaling factor |
+| `type` | string | - | No | `"electric"` or `"diesel"` (from machine) |
+| `number_of_haulers` | number/string | units | Yes | Fleet size (1-300), can be parameter reference |
+| `lane` | number | - | No | Lane assignment: `1`=haul, `2`=return |
+| `initial_position` | number | - | No | Start position: `1`=service zone, `2`=on route |
+| `initial_level_pct` | object | - | Yes | Initial fuel/SOC distribution |
+| `battery_state_of_health` | number/string | % | No | Battery SOH (0-100), parameter reference allowed |
+| `fuel_tank` | number | liters | Diesel only | Fuel tank capacity |
+| `battery_capacity` | number | kWh | Electric only | Battery capacity |
+| `initial_conditions` | object | - | Yes | Routing and location setup |
+| `is_deactive` | boolean | - | No | Whether hauler is disabled |
+
+### 8.3 Initial Level Distribution Object (`initial_level_pct`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | Distribution type: `"exact"`, `"uniform"`, `"normal"`, `"triangle"` |
+| `value` | number/string | Value for exact type or center value |
+| `lowerB` | number/string | Lower bound (uniform/normal/triangle) |
+| `upperB` | number/string | Upper bound (uniform/normal/triangle) |
+| `mean` | number/string | Mean value (normal distribution) |
+| `standard_deviation` | number/string | Standard deviation (normal distribution) |
+| `mode` | number/string | Mode value (triangle distribution) |
+
+### 8.4 Initial Conditions Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `route_id` | number/null | Route assignment |
+| `road_id` | number/null | Initial road segment |
+| `node_id` | number/null | Initial node on road |
+| `service_zone_id` | number/null | Service station zone ID |
+| `service_zone_spot_id` | number/null | Specific spot within service zone |
+| `load_zone_id` | number/null | Initial load zone (optional) |
+| `assigned_load_spots` | number[] | Array of load spot assignments |
+
+### 8.5 Default Values
+
+| Field | Default |
+|-------|---------|
+| `number_of_haulers` | 1 |
+| `initial_position` | 1 (service zone) |
+| `lane` | 2 (return) |
+| `initial_level_pct.type` | "exact" |
+| `initial_level_pct.value` | 95 (from settings) |
+| `battery_state_of_health` | 90 (from settings) |
+| `model_scale` | 1 |
+| `geometry_name` | "_default" |
+| `is_deactive` | false |
+
+---
+
+## 9. Loaders
+
+Loaders represent loading equipment assigned to load zones.
+
+### 9.1 Structure
+
+```json
+{
+  "id": 1,
+  "name": "Loader 1",
+  "key": "loaders",
+  "machine_id": 1,
+  "configured": "CAT 390F (ID: 12)",
+  "used_for": "Truck Loading",
+  "fill_factor_pct": 100,
+  "initial_charge_fuel_levels_pct": 95,
+  "initial_conditions": {
+    "load_zone_id": 1,
+    "assigned_load_spots": [1, 2]
+  },
+  "is_deactive": false
+}
+```
+
+### 9.2 Field Descriptions
+
+| Field | Type | Unit | Required | Description |
+|-------|------|------|----------|-------------|
+| `id` | number | - | Yes | Unique loader identifier |
+| `name` | string | - | Yes | Display name (must be unique) |
+| `key` | string | - | Yes | Always `"loaders"` |
+| `machine_id` | number/string | - | Yes | Reference to machine in `machine_list.loaders` |
+| `configured` | string | - | Yes | Display string: `"{machineName} (ID: {modelId})"` |
+| `used_for` | string | - | Yes | `"Truck Loading"` or `"Load and Carry"` |
+| `fill_factor_pct` | number/string | % | Yes | Fill factor percentage (10-150) |
+| `initial_charge_fuel_levels_pct` | number/null | % | Conditional | Initial SOC/Fuel (0-100), null for non-hybrid |
+| `initial_conditions` | object | - | Yes | Zone and spot assignments |
+| `is_deactive` | boolean | - | No | Whether loader is disabled |
+
+### 9.3 Initial Conditions Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `load_zone_id` | number/null | Reference to load zone |
+| `assigned_load_spots` | number[]/null[] | Array of load spot IDs |
+
+### 9.4 Default Values
+
+| Field | Default |
+|-------|---------|
+| `used_for` | "Truck Loading" |
+| `fill_factor_pct` | 100 |
+| `initial_charge_fuel_levels_pct` | 95 (hybrid only) |
+| `is_deactive` | false |
+
+### 9.5 Usage Constraints
+
+- `"Load and Carry"`: Only works with zones having single load spot
+- `"Truck Loading"`: Works with production target-based methods
+- No duplicate spot assignments in same zone across loaders
+
+---
+
+## 10. Operations - Material Schedules
+
+Material schedules define material movement plans and hauler assignment strategies.
+
+### 10.1 Structure
+
+```json
+{
+  "material_schedules": {
+    "selected_material": 1,
+    "all_material_schedule": []
+  },
+  "operational_delays": {
+    "haulers": [],
+    "trolleys": [],
+    "load_zones": [],
+    "dump_zones": []
+  }
+}
+```
+
+### 10.2 Material Schedule Item
+
+```json
+{
+  "id": 1,
+  "name": "Material Schedule 1",
+  "data": [],
+  "csv_data": [],
+  "hauler_assignment": {
+    "scheduling_method": "grouped_assignment",
+    "truck_schedule": {},
+    "truck_group": {}
+  },
+  "mixed_fleet_based_initial_assignment": false
+}
+```
+
+### 10.3 Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `selected_material` | number/string/null | Yes | ID or name of currently selected schedule |
+| `all_material_schedule` | array | Yes | Array of material schedule objects |
+
+### 10.4 Material Schedule Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | number | Yes | Unique schedule identifier |
+| `name` | string | Yes | Display name |
+| `data` | array | Yes | Array of material movement items |
+| `csv_data` | array | No | Alternative data source from CSV import |
+| `hauler_assignment` | object | Yes | Hauler assignment strategy configuration |
+| `mixed_fleet_based_initial_assignment` | boolean | No | Whether to use mixed fleet assignments |
+
+### 10.5 Hauler Assignment Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `scheduling_method` | string | Assignment method (see below) |
+| `truck_schedule` | object | Truck schedule mapping (truck_schedule_based only) |
+| `truck_group` | object | Truck group configuration (grouped_assignment only) |
+
+### 10.6 Scheduling Methods
+
+| Method | Description |
+|--------|-------------|
+| `grouped_assignment` | Default, uses `num_of_hauler` field |
+| `production_target_based` | Production-based assignment, uses quantity as target |
+| `advanced_production_target_based` | Advanced variant with plan groups |
+| `truck_schedule_based` | Specific truck routing schedule |
+| `minestar_dispatching` | MineStar integration (restricted feature) |
+
+### 10.7 Material Movement Item (data array)
+
+Items generated by `create_operations_structure()` (`backend/scripts/simgen/operations.py`):
+
+```json
+{
+  "id": 1,
+  "load_zone": "Load zone 1",
+  "dump_zone": "Dump zone 1",
+  "route": "",
+  "auto_generate_route": true,
+  "material": "copper_ore",
+  "density": 1600.0,
+  "num_of_hauler": 1,
+  "assigned_machine_type": "Hauler",
+  "multiple_routes": false,
+  "hauler_group_id": 1
+}
+```
+
+> **Material sourcing**: `material` defaults to `"copper_ore"` (`DEFAULT_MATERIAL` in `constants.py`). Density (kg/m³) is resolved from `reference_data/materials.json` as `loose_density_tpm3 × 1000`; falls back to `DEFAULT_MATERIAL_DENSITY = 1960.19` if the entry is absent. A `zone_material_map` dict can supply per-load-zone `(material, density)` overrides — when not provided the output is site-wide uniform (`operations.py: _resolve_item_material()`).
+
+### 10.8 Material Movement Item Fields
+
+| Field | Type | Unit | Description |
+|-------|------|------|-------------|
+| `id` | number/string | - | Row identifier |
+| `load_zone` | string/number | - | Name or ID of loading zone |
+| `dump_zone` | string/number | - | Name or ID of dumping zone |
+| `route` | string | - | Route name (empty string when `auto_generate_route` is true) |
+| `auto_generate_route` | boolean | - | Auto-generate route from zones |
+| `material` | string | - | Material name/type (from `reference_data/materials.json`) |
+| `density` | number | kg/m³ | Material loose density (`loose_density_tpm3 × 1000`) |
+| `quantity` | number | tonnes | Material quantity or production target (user-set; not emitted by generator) |
+| `num_of_hauler` | number | - | Number of haulers (grouped_assignment only) |
+| `start_time` | number | minutes | Start time (user-set; not emitted by generator) |
+| `end_time` | number | minutes | End time (user-set; not emitted by generator) |
+| `plan_group` | number | - | Plan group ID (-1 for default) |
+| `assigned_machine_type` | string | - | `"Hauler"` or `"loader"` |
+| `multiple_routes` | boolean | - | Whether to use multiple routes for this entry |
+| `hauler_group_id` | number/null | - | ID of specific hauler group |
+
+### 10.9 Default Values
+
+| Field | Default |
+|-------|---------|
+| `scheduling_method` | `"grouped_assignment"` |
+| `mixed_fleet_based_initial_assignment` | `false` |
+| `assigned_machine_type` | `"Hauler"` (note capital H in generated output) |
+| `plan_group` | `-1` |
+| `material` | `"copper_ore"` (constants.py `DEFAULT_MATERIAL`) |
+| `density` | resolved from `reference_data/materials.json` `loose_density_tpm3 × 1000`; fallback `1960.19` kg/m³ |
+| `auto_generate_route` | `true` |
+| `route` | `""` (empty — route is auto-generated at runtime) |
+| `multiple_routes` | `false` |
+
+---
+
+## 11. File Format
+
+- **Extension**: `.json`
+- **Encoding**: UTF-8

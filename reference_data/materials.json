@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "description": "Bulk material properties for haulage and loading calculations. Densities let payload %, tonnes, and loader bucket m3 reconcile; swell (bulking) converts in-situ bank volume to loose hauled volume; fill factor is the typical loader-bucket fill for the material. The pipeline now consumes loose density: the selected material's loose_density_tpm3 is converted to kg/m3 and written to the des_inputs.json material catalog and schedule (default copper_ore, selectable via the export config 'material' field). Swell and fill factor remain reference-only for now; payload is still tracked as a percentage/tonnage (per-truck payload_tonnes tonnage is a future step).",
+  "units": {
+    "bank_density_tpm3": "in-situ (bank) density, tonnes per cubic metre",
+    "loose_density_tpm3": "loose (broken/hauled) density, tonnes per cubic metre",
+    "swell_pct": "bulking on excavation, percent (loose volume vs bank volume)",
+    "fill_factor_pct": "typical loader bucket fill factor for the material, percent"
+  },
+  "sources": [
+    "Caterpillar — Bucket Fill Factors (cat.com/en_US/articles/ci-articles/bucket-fill-factors.html)",
+    "Micromine — Estimated Material Densities",
+    "Caterpillar Performance Handbook (material weights / swell)"
+  ],
+  "materials": [
+    {
+      "name": "copper_ore", "display_name": "Copper ore",
+      "bank_density_tpm3": 2.4, "bank_range_tpm3": [2.2, 2.6], "loose_density_tpm3": 1.6,
+      "swell_pct": 40, "fill_factor_pct": 90, "notes": "porphyry copper ~35% swell; harder ore higher"
+    },
+    {
+      "name": "iron_ore", "display_name": "Iron ore",
+      "bank_density_tpm3": 3.0, "bank_range_tpm3": [2.5, 3.5], "loose_density_tpm3": 2.1,
+      "swell_pct": 50, "fill_factor_pct": 88, "notes": "wide range by ore type (hematite up to ~5.1 t/m3)"
+    },
+    {
+      "name": "gold_ore", "display_name": "Gold ore",
+      "bank_density_tpm3": 2.65, "bank_range_tpm3": [2.5, 2.8], "loose_density_tpm3": 1.8,
+      "swell_pct": 42, "fill_factor_pct": 88, "notes": "treat as hard rock; varies with host rock"
+    },
+    {
+      "name": "coal", "display_name": "Coal",
+      "bank_density_tpm3": 1.35, "bank_range_tpm3": [1.25, 1.45], "loose_density_tpm3": 1.0,
+      "swell_pct": 38, "fill_factor_pct": 105, "notes": "free-flowing; high bucket fill factor"
+    },
+    {
+      "name": "overburden", "display_name": "Overburden / waste rock",
+      "bank_density_tpm3": 2.3, "bank_range_tpm3": [2.0, 2.6], "loose_density_tpm3": 1.7,
+      "swell_pct": 35, "fill_factor_pct": 85, "notes": "blasted hard rock; well-blasted fills ~90-100%"
+    }
+  ]
+}

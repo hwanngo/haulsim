@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────
+# OS / editors / local tooling
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# ─────────────────────────────────────────────────────────────
+# AI agents / assistants — keep all of these out of the repo.
+# (AGENTS.md and docs/standards/ are intentionally committed; they are the
+# shareable, tool-agnostic source of truth that these tools should read.)
+# ─────────────────────────────────────────────────────────────
+.claude/
+.cursor/
+.cursorrules
+.codex/
+.gstack/
+.aider*
+.continue/
+.windsurf/
+.gemini/
+.roo/
+.cline/
+.github/copilot-instructions.md
+*superpowers*
+docs/superpowers/
+
+# ─────────────────────────────────────────────────────────────
+# Secrets & environment
+# Ignore every .env variant; keep the committed *.example templates.
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!*.example
+
+# ─────────────────────────────────────────────────────────────
+# Python (backend) — unanchored so they apply in any subdirectory
+# ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+# Litestar / web framework
+instance/
+.webassets-cache
+
+# ─────────────────────────────────────────────────────────────
+# Node / frontend
+# ─────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+.vite/
+coverage/
+
+# ─────────────────────────────────────────────────────────────
+# Logs
+# ─────────────────────────────────────────────────────────────
+*.log
+
+# ─────────────────────────────────────────────────────────────
+# Generated artifacts (regenerate via the Makefile / scripts)
+# ─────────────────────────────────────────────────────────────
+backend/uploads/
+/output/
+sample_data/*.zip
+db/*.duckdb

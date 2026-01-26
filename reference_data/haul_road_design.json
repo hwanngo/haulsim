@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "description": "Surface-mine haul-road design norms from public mining-engineering sources. Used to ground the DES settings the model generator emits (grades, rolling resistance, traction, speed limits). Values are typical/recommended ranges, not site measurements.",
+  "max_grade_pct": {
+    "typical_design_max": 10,
+    "sustained_optimum_range": [7, 10],
+    "absolute_max_short_haul": 20,
+    "note": "most mine grades fall 6-10%; many regulations cap sustained grade at 10%"
+  },
+  "rolling_resistance_pct": {
+    "well_maintained": 2.0,
+    "good_range": [1.5, 3.0],
+    "poor_or_soft": [5, 8],
+    "loose_sand_gravel": 10,
+    "note": "approx +2% per 25 mm tyre penetration above the base"
+  },
+  "traction_coefficient": {
+    "dry_earth_dirt": 0.60,
+    "wet_earth": 0.45,
+    "dry_crushed_rock": 0.65,
+    "wet_rock_or_clay": 0.25
+  },
+  "running_surface_width": {
+    "single_lane_x_truck_width": 2.0,
+    "dual_lane_x_truck_width": 3.5,
+    "per_additional_lane_x_truck_width": 1.5,
+    "note": "widen on curves for body overhang; add ~0.5x truck width clearance"
+  },
+  "speed_limits_kmh": {
+    "loaded_flat": [40, 50],
+    "empty_flat": [50, 60],
+    "loaded_downgrade_at_or_below_minus5pct": 20,
+    "loaded_steep_downgrade": 10,
+    "ramp_design_speed": 25,
+    "note": "downgrade speeds are retarder/brake-limited"
+  },
+  "superelevation_pct": {
+    "typical": [4, 6],
+    "max": 10,
+    "straight_road_crossfall": [2, 4],
+    "curve_speed_formula": "V^2 = 127 * R * (e + f), e=superelevation rate, f=side friction"
+  },
+  "sources": [
+    "US Bureau of Mines — Design of Surface Mine Haulage Roads, A Manual (Kaufman & Ault)",
+    "Tannant & Regensburg — Guidelines for Mine Haul Road Design (2001)",
+    "Caterpillar Performance Handbook (Ed. 29): rolling resistance, coefficients of traction",
+    "Caterpillar — Rolling Resistance Factors (cat.com)"
+  ]
+}

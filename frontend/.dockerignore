@@ -1,0 +1,18 @@
+# Frontend image build context = frontend/. Keep it minimal.
+node_modules
+dist
+.vite
+coverage
+
+# Never let local env files into the build context — Vite inlines any VITE_*
+# vars it finds at build time, which would bake them into the static bundle.
+.env*
+!*.example
+
+# Build/meta files not needed inside the image
+Dockerfile
+.dockerignore
+
+# OS / logs
+.DS_Store
+*.log

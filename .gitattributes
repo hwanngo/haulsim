@@ -1,0 +1,17 @@
+# Normalize line endings to LF in the repo; let Git handle checkout per-OS.
+* text=auto eol=lf
+
+# Lock files & generated data: collapse in diffs and exclude from language stats.
+pnpm-lock.yaml      linguist-generated=true -diff
+backend/uv.lock     linguist-generated=true -diff
+
+# GWMReader.exe is actually a Python script with a shebang (text), not a binary,
+# despite the .exe name — keep it text so diffs and EOL handling work.
+executables/GWMReader.exe text eol=lf
+
+# Binary assets — never try to diff or EOL-convert these.
+*.gz   binary
+*.zip  binary
+*.png  binary
+*.jpg  binary
+*.ico  binary

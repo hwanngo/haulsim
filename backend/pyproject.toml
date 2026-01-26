@@ -1,0 +1,48 @@
+[project]
+name = "amt-cycle-productivity-backend"
+version = "1.0.0"
+description = "Litestar API for the AMT Cycle Workbench (telemetry -> simulation files)"
+requires-python = ">=3.14"
+dependencies = [
+    "werkzeug",
+    "python-dotenv",
+    "scikit-learn",
+    "numpy",
+    "shapely",
+    "tqdm",
+    "duckdb>=1.5.4",
+    "msgspec>=0.21.1",
+    "polars>=1.42.0",
+    "litestar>=2.24.0",
+    "granian>=2.7.7",
+    "openpyxl>=3.1.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+# The backend is run as a script (uv run python app.py), not built/installed as a
+# package, so uv should not try to build the local source tree.
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint.per-file-ignores]
+# Entry point and scripts bootstrap sys.path before importing local modules.
+"app.py" = ["E402"]
+"tests/*" = ["E402"]
+# simgen aggregates its submodules via star-import facades; the package's public
+# surface is verified by tests/test_facade_namespace.py.
+"scripts/simulation_generator.py" = ["E402", "F401", "F403", "F405"]
+"scripts/simgen/des.py" = ["F403", "F405"]
+"scripts/simgen/model.py" = ["F403", "F405"]
+"scripts/simgen/operations.py" = ["F403", "F405"]
+"scripts/simgen/loaders.py" = ["F401"]
+# api/jobs.py is the shared re-export surface consumed by the controllers.
+"api/jobs.py" = ["F401"]
+"api/imports.py" = ["F401"]

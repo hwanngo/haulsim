@@ -1,0 +1,46 @@
+# Backend image build context = repo ROOT (so executables/ is reachable).
+# The backend image only needs backend/ + executables/, so exclude everything
+# else to keep the context tiny and never bake secrets/junk into a layer.
+
+# VCS & repo meta
+.git
+.gitignore
+.gitattributes
+.dockerignore
+.editorconfig
+*.md
+docs/
+
+# Secrets / environment
+.env
+.env.*
+
+# Python caches / build artifacts (any depth)
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/.pytest_cache/
+**/*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+htmlcov/
+
+# Other apps / tooling the backend image doesn't need
+frontend/
+tools/
+sample_data/
+output/
+backend/uploads/
+
+# db/: the backend image bakes an embedded DuckDB, so it NEEDS db/*.py
+# (catalog.py + generate_seed.py) in the context. The prebuilt .duckdb is
+# regenerated inside the image (RUN generate_seed.py), so keep it out to stay lean.
+db/*.duckdb
+
+# OS / editor / local agent state
+.DS_Store
+.vscode/
+.idea/
+.gstack/
+*superpowers*
